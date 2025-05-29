@@ -1,28 +1,26 @@
-const {
+ const {
     userModel,
     viewModel,
-    cartModel,
-    addressModel,
+   cartModel,
+     addressModel,
     memberModel,
-    bookingOrderModel,
-    appointmentModel,
-    prescriptionModel,
-    
-    
+      bookingOrderModel,
+       appointmentModel,
+         prescriptionModel,
 }=require('./../models/userModel');
 
-const { packagecategoryModel,
-       packageModel,
-       checkupRoutineModel,
-       servicesModel,
-       reportsModel,
-       blogCategoryModel,
+   const { packagecategoryModel,
+           checkupRoutineModel,
+           servicesModel,reportsModel,
+            blogCategoryModel,
           blogModel,
           blogViewModel,
-    }=require("./../models/adminModel");
+    packageModel}=require("./../models/adminModel");
 
 const jwt=require('jsonwebtoken');
 const bcrypt=require('bcrypt');
+
+     const mongoose=require('mongoose');
 
 
 //make reuse function 
@@ -192,7 +190,7 @@ const userLogin = async (req, res) => {
     //updateUser data
     const updateUser = async (req, res) => {
         try {
-            const {userId,name,email,dob,address,cityName,pincode,country,bloodGroup,stateName,gender}=req.body;
+            const {userId,name,email,dob,address,cityName,pincode,country,bloodGroup,gender,stateName}=req.body;
             if(!userId){
                 return res.status(400).json({message:"userId is required"});
             }
@@ -206,7 +204,7 @@ const userLogin = async (req, res) => {
                 country,
                 bloodGroup,
                 stateName,
-                gender,
+               gender,
 
             };
             if(req.file){
@@ -243,7 +241,7 @@ const deleteUser = async (req, res) => {
     try {
         const {userId,reason}=req.body;
         if(!userId || !reason){
-            return res.status(400).json({message:"userId ,reason is required"});
+            return res.status(400).json({message:"userId,reason is required"});
         }
         const user = await userModel.findByIdAndUpdate({_id:userId},{reason,userStatus:0},{new:true});
         if (!user) return res.status(404).json({ error: 'User not found' });
@@ -253,8 +251,7 @@ const deleteUser = async (req, res) => {
     }
 };
 
-
-
+      
 //packageCategory list 
     const packageCategoryList = async (req, res) => {
         try {
@@ -267,37 +264,70 @@ const deleteUser = async (req, res) => {
         }
     };
 
-    //package list
-    const packageList = async (req, res) => {
-        try {
-            const { categoryId } = req.body;
-            let packages = [];
-    
-            if (!categoryId) {
-                // Find all package categories of type "Best Packages"
-                const ct = await packagecategoryModel.find({ type: "Best Packages" });
-    
-                // Extract category IDs
-                const ID = ct.map(item => item._id);
-    
-                // Find packages that are NOT in these category IDs
-                packages = await packageModel.find({ package_categoryId: { $in: ID } });
-    
-            } else {
-                // Find packages for the given categoryId
-                packages = await packageModel.find({ package_categoryId: categoryId });
-            }
-    
-            if (!packages.length) {
-                return res.status(200).json({ result: false, message: 'No package found for this category', data: packages });
-            }
-    
-            res.status(200).json({ result: true, message: "Package list", data: packages });
-    
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    };
+  
+ //package list
+
+  const packageList = async (req, res) => {
+  try {
+    const { categoryId } = req.body;
+    let packages = [];
+
+    if (!categoryId) {
+      // Find all package categories of type "Best Packages"
+      const ct = await packagecategoryModel.find({ type: "Best Packages" });
+
+      // Extract category IDs
+      const ID = ct.map(item => item._id);
+
+      // Find packages that belong to those category IDs
+      packages = await packageModel.find({ package_categoryId: { $in: ID } });
+    } else {
+      // Find packages for the given specific categoryId
+      packages = await packageModel.find({ package_categoryId: categoryId });
+    }
+
+    // Respond based on result
+    if (!packages.length) {
+      return res.status(200).json({
+        result: false,
+        message: 'No package found for this category',
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      result: true,
+      message: "Package list",
+      data: packages,
+    });
+  } catch (error) {
+    res.status(500).json({ result: false, error: error.message });
+  }
+};
+ 
+
+
+  const  getAllPackageList = async (req, res) => {
+  try {
+    const packages = await packageModel.find(); // Fetch all packages
+
+    if (!packages.length) {
+      return res.status(200).json({
+        result: false,
+        message: 'No packages found',
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      result: true,
+      message: 'Package list',
+      data: packages,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
     
 
     //getPackage details
@@ -318,9 +348,7 @@ const deleteUser = async (req, res) => {
             };
 
 
-
-         
-
+       
             const familyCarepackageList = async (req, res) => {
                 try {
                     const packages = await packageModel.find({packageType:"Featured Family Care"});
@@ -346,8 +374,7 @@ const deleteUser = async (req, res) => {
                 }
             };
 
-
-            const bestPackageCategoryList = async (req, res) => {
+         const bestPackageCategoryList = async (req, res) => {
                 try {
                     const categories = await packagecategoryModel.find({ type: "Best Packages" });
             
@@ -396,8 +423,7 @@ const filterPackagesByAgeAndGender = async (req, res) => {
 };
 
 
-
-
+   
                     //get all checkup routines
                     const getAllCheckupRoutines=async(req,res)=>{
                         try {
@@ -457,7 +483,8 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                         }
                     };
 
-                    // add to cart
+
+               // add to cart
                     const addToCart = async (req, res) => {
                         try {
                             const { userId, packageId } = req.body;
@@ -503,16 +530,16 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                             if (!userId ||!packageId) {
                                 return res.status(400).json({ message: 'userId, packageId is required' });
                             }
-                            await cartModel.finsOneAndDelete({ userId, packageId });
+                            await cartModel.findOneAndDelete({ userId, packageId });
                             res.status(200).json({ result: true, message: "Package deleted from cart successfully" });
                         } catch (error) {
                             res.status(500).json({ error: error.message });
                         }
                     };
                     // update cart item quantity
+                    
 
-
-               
+                    
 
                     const createAddress = async (req, res) => {
                         try {
@@ -548,7 +575,6 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                             res.status(500).json({ error: err.message });
                         }
                     };
-                    
                     
                     const deleteAddress = async (req, res) => {
                         try {
@@ -639,10 +665,7 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                         }
                     };
 
-                    const mongoose=require('mongoose');
-
-                    
-          //booked order api
+            //booked order api
           const bookedOrder = async (req, res) => {
             try {
               const {
@@ -660,9 +683,7 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                 report,
                 sampleCollectDate,
                 sampleCollectTime,
-                bookingId,
-                clinicName_drName_hpName,
-                testName,
+                bookingId
               } = req.body;
           
               // Check if userId is provided
@@ -758,9 +779,9 @@ const filterPackagesByAgeAndGender = async (req, res) => {
             }
           };
           
+   
 
-
-
+   
           //all services list
           const allServices_list = async (req, res) => {
             try {
@@ -860,7 +881,7 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                           //get all appointments api
                             const getAllAppointments = async (req, res) => {
                                 try {
-                                    const{userId}=req.body;
+                                   const{userId}=req.body;
                                     if(!userId){
                                         return res.status(400).json({success:false,message:'Please provide userId'});
 
@@ -882,13 +903,14 @@ const filterPackagesByAgeAndGender = async (req, res) => {
                                                     });
                                                     };
                                                 };
-             // Add prescription
+                       
+               // Add prescription
 const addPrescription = async (req, res) => {
     try {
-      const { userId,memberId } = req.body;
+      const {userId, memberId } = req.body;
   
       if (!memberId || !req.files || req.files.length === 0) {
-        return res.status(400).json({ message: 'memberId,userId and files are required' });
+        return res.status(400).json({ message: 'memberId ,userId and files are required' });
       }
   
       
@@ -923,11 +945,11 @@ const addPrescription = async (req, res) => {
   //prescription file list
   const getPrescriptionFiles = async (req, res) => {
     try{
-    const { userId} = req.body;
+    const { userId } = req.body;
     if (!userId) {
         return res.status(400).json({ message: 'userId is required' });
     }
-    const prescriptions = (await prescriptionModel.find({ userId })).populate('memberId');  
+    const prescriptions = await prescriptionModel.find({ userId }).populate('memberId');  
     if (!prescriptions || prescriptions.length === 0) {
         return res.status(404).json({ message: 'No prescriptions found' });
         }  
@@ -969,7 +991,9 @@ const deletePrescriptionFile = async (req, res) => {
     }
 };
 
+                          
 
+        
 const getByIdPrescriptionFile = async (req, res) => {
     try{
     const { prescriptionId } = req.body;
@@ -980,7 +1004,7 @@ const getByIdPrescriptionFile = async (req, res) => {
     if (!deleted) {
         return res.status(404).json({ message: 'Prescription not found' });
     }
-    res.status(200).json({ success: true, message: 'Prescription got successfully' ,data:deleted});
+    res.status(200).json({ success: true, message: 'Prescription got successfully',data:deleted });
     }
     catch(err){
         res.status(500).json({
@@ -988,9 +1012,10 @@ const getByIdPrescriptionFile = async (req, res) => {
            
             });
     }
-};
+};   
 
 
+       
 const getbookingOrder = async (req, res) => {
     try {
       const {bookingOrderId} = req.body;
@@ -1033,8 +1058,7 @@ const getbookingOrder = async (req, res) => {
     }
   };
   
-
-
+       
   //user reports list
   const userReportsList=async(req,res)=>{
     try{
@@ -1091,7 +1115,9 @@ const getbookingOrder = async (req, res) => {
         res.status(500).json({result:false,message:err.message})
     }
   }
+    
 
+     
   const addViewUser = async (req, res) => {
     try {
       const { userId, blogId } = req.body;
@@ -1194,11 +1220,7 @@ const getbookingOrder = async (req, res) => {
     }
   };
 
-  
-          
-          
 
-  
         
 // exports  functions
 module.exports = {
@@ -1209,20 +1231,20 @@ module.exports = {
     deleteUser,
     userVerify,
     resendOtp,
-    packageList,
+   packageList,
     packageCategoryList,
     getPackageDetails,
-    familyCarepackageList,
+ familyCarepackageList,
     tophealthCheckuppackageList,
-    filterPackagesByAgeAndGender,
+     filterPackagesByAgeAndGender,
     bestPackageCategoryList,
-    getAllCheckupRoutines,
+   getAllCheckupRoutines,
     addViewsToPackage,
     getRecentlyViewedPackages,
-    addToCart,
+     addToCart,
     getCartItems,
-    deleteFromCart,
-    createAddress,
+    deleteFromCart,      
+   createAddress,
     getAddressesByUser,
     updateAddress,
     updateMember,
@@ -1232,29 +1254,21 @@ module.exports = {
     getMembersByUser,
     getAddress,
     getMember,
-    bookedOrder,
-    bookingOrder_list,
-    allServices_list,
+   bookedOrder,
+    bookingOrder_list, 
+   allServices_list,
     addAppointment,
     getAllAppointments,
     addPrescription,
-    getPrescriptionFiles,
-    deletePrescriptionFile,
-    getByIdPrescriptionFile,
-    getbookingOrder,
-    userReportsList,
+getPrescriptionFiles,
+deletePrescriptionFile, 
+ getByIdPrescriptionFile,
+   getbookingOrder,
+   userReportsList,
     reportsDetails,
     reportsDelete,
     addViewUser,
     blogList,
     blogCategoryList,
-
-
-
-
-   
-
-    
-
-
-};
+getAllPackageList,
+ };

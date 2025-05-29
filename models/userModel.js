@@ -35,14 +35,13 @@ const userSchema=new mongoose.Schema({
     activeStatus:{type:Boolean,default:1},
     userType:{type:String,default:'user'},
     otp:Number,
-    password:String,
-    reason:String,
+   password:String,
+   reason:String,
     
 
 },{timestamps:true});
 
-
-
+    
 const viewSchema=new mongoose.Schema({
     userId:{type:mongoose.Schema.Types.ObjectId,ref:'user',required:true},
     packageId:{type:mongoose.Schema.Types.ObjectId,ref:'package',required:true},
@@ -50,6 +49,7 @@ const viewSchema=new mongoose.Schema({
  },{timestamps:true});
 
 
+     
  const cartSchema=new mongoose.Schema({
     userId:{type:mongoose.Schema.Types.ObjectId,ref:'user',required:true},
     packageId:{type:mongoose.Schema.Types.ObjectId,ref:'package',required:true},
@@ -61,7 +61,7 @@ const viewSchema=new mongoose.Schema({
  },{timestamps:true});
 
 
- //user address schema
+    //user address schema
  const addressSchema=new mongoose.Schema({
     userId:{type:mongoose.Schema.Types.ObjectId,ref:'user',required:true},
     address:String,
@@ -88,11 +88,11 @@ const viewSchema=new mongoose.Schema({
     phone:String,
     email:String,
     activeStatus:{type:Boolean,default:1},
-    
+     
   
     },{timestamps:true});
-
-
+   
+    
     //booking order Schema
     const bookingOrderSchema = new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
@@ -133,21 +133,20 @@ const viewSchema=new mongoose.Schema({
       
         bookingStatus: {
           type: Number,
-          default: 0,
+          default:0,
         },
-       
       
       }, { timestamps: true });
-
-
-      //bookingAppointment schema
+      
+   
+     //bookingAppointment schema
       const bookingAppointmentSchema = new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
           appointmentDate: String,
           appointmentTime: String, 
           appointmentStatus: {
-            type: Boolean,
-            default: false,
+            type:Number,
+            default:0,
             },
             serviceName:String,
             description:String,
@@ -165,14 +164,13 @@ const viewSchema=new mongoose.Schema({
             },
             { timestamps: true });
 
-
-
+      
             const prescriptionSchema=new mongoose.Schema({
               memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'member', required: true },
               files:Array,
-              userId:{
+             userId:{
                 type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true
-              },
+                },
               status:{
                 type:Number,
                 default:0
@@ -182,29 +180,25 @@ const viewSchema=new mongoose.Schema({
 
 
 
-     
-   
+
 
 
 const userModel= mongoose.model('user',userSchema);
-const viewModel= mongoose.model('view',viewSchema);
-const cartModel= mongoose.model('cart',cartSchema);
-const addressModel= mongoose.model('address',addressSchema);
+  const viewModel= mongoose.model('view',viewSchema);
+  const cartModel= mongoose.model('cart',cartSchema);
+   const addressModel= mongoose.model('address',addressSchema);
 const memberModel= mongoose.model('member',memberSchema);
-const bookingOrderModel= mongoose.model('bookingOrder',bookingOrderSchema);
-const appointmentModel= mongoose.model('bookingAppointment',bookingAppointmentSchema);
-const prescriptionModel = mongoose.model('prescription', prescriptionSchema);
-
-
+   const bookingOrderModel= mongoose.model('bookingOrder',bookingOrderSchema);
+    const appointmentModel= mongoose.model('bookingAppointment',bookingAppointmentSchema);
+   const prescriptionModel = mongoose.model('prescription', prescriptionSchema);
 
 module.exports = {
     userModel,
     viewModel,
     cartModel,
-    addressModel,
+   addressModel,
     memberModel,
     bookingOrderModel,
     appointmentModel,
-    prescriptionModel,
-  
+   prescriptionModel,
 }

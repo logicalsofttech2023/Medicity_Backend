@@ -1,21 +1,19 @@
 const { packagecategoryModel,
-      packageModel,
       checkupRoutineModel,
-      faqModel,
+     faqModel,
       aboutUsModel,
       contactUsModel,
-      servicesModel,
-      reportsModel,
-      blogCategoryModel,
+      servicesModel,reportsModel,
+        blogCategoryModel,
       blogModel,
       blogViewModel,
-    }=require("./../models/adminModel");
+      packageModel}=require("./../models/adminModel");
 
       const {userModel,
-        bookingOrderModel,
+            bookingOrderModel,
             appointmentModel,
             prescriptionModel,
-      }=require("./../models/userModel");
+          }=require("./../models/userModel");
 
       const addPackageCategory=async(req,res)=>{
         try {
@@ -31,7 +29,7 @@ const { packagecategoryModel,
                 return res.status(400).json({message:"Category already exist"});
             }                                                                           
 
-        const packageCategory=new packagecategoryModel({type,name,image:req.file.filename});
+        const packageCategory=new packagecategoryModel({name,type,image:req.file.filename});
         await packageCategory.save();
         res.status(200).json({result:true,message:"Data inserted successfully"});
        
@@ -88,8 +86,7 @@ const { packagecategoryModel,
                 return res.status(404).json({message:"Package category not found"});
             }
             const obj={
-                name:req.body.name,
-                type,
+                name:req.body.name,type,
             }
             if(req.file){
                 obj.image=req.file.filename;
@@ -106,7 +103,7 @@ const { packagecategoryModel,
 
 
     //add package
-    const addPackage=async(req,res)=>{
+   const addPackage=async(req,res)=>{
         try {
             const {title,actual_price,price,discount_price,
                 report_time,fasting_time,gender,ageGroup,
@@ -172,10 +169,10 @@ const { packagecategoryModel,
         };
 
 
+
         //get all packages
         const getAllPackages=async(req,res)=>{
             try {
-               
                     
                 const packages=await packageModel.find({}).populate('package_categoryId');
                 if(!packages.length){
@@ -205,7 +202,7 @@ const { packagecategoryModel,
             }
         };
         //UPDAte package
-        const updatePackage=async(req,res)=>{
+     const updatePackage=async(req,res)=>{
             try {
                 const {packageId}=req.body;
                 if(!packageId){
@@ -268,6 +265,9 @@ const { packagecategoryModel,
 
 
 
+
+
+
                     
                     //DELETE package
                     const deletePackage=async(req,res)=>{
@@ -302,20 +302,19 @@ const { packagecategoryModel,
                         }
                     };
 
-
-
+              
                     //add checkup routine api
                     const addCheckupRoutine=async(req,res)=>{
                         try {
                             const {name,gender,age1,age2}=req.body;
                             if(!name){
-                                return res.status(400).json({message:"name and image are required"});
+                                return res.status(400).json({message:"name,gender,age1,age2 and image are required"});
                             }
                             if(!req.file){
                                 return res.status(400).json({message:"image is required"});
                             }
                             const checkupRoutine= new checkupRoutineModel({
-                               name,gender,age1,age2,
+                               name,age1,age2,gender,
                                image:req.file.filename,
                               
                             });
@@ -392,8 +391,7 @@ const { packagecategoryModel,
                         }
                     };
 
-
-
+         
 //user  list
 const userList=async(req,res)=>{
     try {
@@ -604,9 +602,8 @@ const userList=async(req,res)=>{
                                         res.status(500).json({ error: error.message });
                                         }
                                     };
-              
-
-        //create service api
+                 
+                     //create service api
         const createService = async (req, res) => {
             try {
               const { name, description, price, duration } = req.body;
@@ -677,9 +674,8 @@ const userList=async(req,res)=>{
             }
           };
           
-
-          
-//all order booking list
+            
+         //all order booking list
 const getAllOrders = async (req, res) => {
     try{
     const orders = await bookingOrderModel.find() .populate({
@@ -729,8 +725,7 @@ const getAllApointments = async (req, res) => {
 }
 };
 
-
-//prescription file list
+          //prescription file list
   const allPrescriptionFiles = async (req, res) => {
     try{
 
@@ -860,6 +855,9 @@ const getByIdOrders = async (req, res) => {
 }
 };
 
+
+
+        
 const createBlogCategory=async(req,res)=>{
     try{
         const{name}=req.body;
@@ -991,6 +989,7 @@ const updateBlog=async(req,res)=>
                             }
 
 
+             
         const bookingOrderList = async (req, res) => {
                     try {
                       
@@ -1099,12 +1098,12 @@ const updateBlog=async(req,res)=>
             updatePackage,
             deletePackage,
             adminLogin,
-            addCheckupRoutine,
+                     addCheckupRoutine,
             getAllCheckupRoutines,
             getSingleCheckupRoutine,
             updateCheckupRoutine,
             deleteCheckupRoutine,
-            userList,
+           userList,
             addFaq,
             updateFaq,
             getFaq,
@@ -1119,7 +1118,7 @@ const updateBlog=async(req,res)=>
             getContactus,
             createService,
             getAllService,
-            getAllOrders,
+             getAllOrders,
             getAllApointments,
             allPrescriptionFiles,
             addReports,
@@ -1133,14 +1132,8 @@ const updateBlog=async(req,res)=>
             updateBlog,
             getBlog,
             getAllBlog,
-            bookingOrderList,
+           bookingOrderList,
             bookingOrderDetails,
             bookingOrderStatusChange,
-
-
-            
-
-           
-
 
         }

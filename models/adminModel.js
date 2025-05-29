@@ -20,7 +20,7 @@ const packageSchema=new mongoose.Schema({
     ageGroup:String,
     interoduction:String,
     total_test:Number,
-    image:String,
+   image:String,
     packageType:String,
     description:String,
     offer:[{
@@ -32,23 +32,23 @@ const packageSchema=new mongoose.Schema({
     }],
     package_categoryId:{
         type:mongoose.Schema.Types.ObjectId,
-        required:false,
         ref:'packagecategory'
     },
 
    
 },{timestamps:true});
 
-const checkupRoutineSchema=new mongoose.Schema({
+  const checkupRoutineSchema=new mongoose.Schema({
     image:{type:String},
     name:String,
     gender:String,
     age1:Number,
-    age2:Number,
+   age2:Number,
    
 },{timestamps:true});
 
-//faq schema
+
+   //faq schema
 const faqSchema=new mongoose.Schema({
     question:{type:String},
     answer:{type:String},
@@ -69,7 +69,7 @@ const aboutUsSchema=new mongoose.Schema({
         });
 
 
-//services Schema
+   //services Schema
 const servicesSchema=new mongoose.Schema({
     name:{type:String},
     description:{type:String},
@@ -83,7 +83,7 @@ const servicesSchema=new mongoose.Schema({
 
     },{timestamps:true});
 
-
+    
  //report schema
       const reportSchema=new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user'},
@@ -121,19 +121,18 @@ const servicesSchema=new mongoose.Schema({
 
       
 
-
-//models
 const packagecategoryModel= mongoose.model('packagecategory',packageCategorySchema);
 const packageModel= mongoose.model('package',packageSchema);
-const checkupRoutineModel= mongoose.model('checkuproutine',checkupRoutineSchema);
-const faqModel= mongoose.model('faq',faqSchema);
+  const checkupRoutineModel= mongoose.model('checkuproutine',checkupRoutineSchema);
+  const faqModel= mongoose.model('faq',faqSchema);
 const aboutUsModel= mongoose.model('aboutus',aboutUsSchema);
 const contactUsModel= mongoose.model('contactus',contactUsSchema);
-const servicesModel= mongoose.model('services',servicesSchema);
-const reportsModel = mongoose.model('report', reportSchema);
-const blogCategoryModel = mongoose.model('blogcategory', blogCategorySchema);
+  const servicesModel= mongoose.model('services',servicesSchema);
+    const reportsModel = mongoose.model('report', reportSchema);
+    const blogCategoryModel = mongoose.model('blogcategory', blogCategorySchema);
 const blogModel = mongoose.model('blog', blogSchema);
 const blogViewModel = mongoose.model('blogview', blogViewSchema);
+
 
 module.exports = {
     packagecategoryModel,
@@ -142,9 +141,9 @@ module.exports = {
     faqModel,
     aboutUsModel,
     contactUsModel,
-    servicesModel,
-    reportsModel,
-    blogCategoryModel,
+   servicesModel,
+   reportsModel,
+   blogCategoryModel,
     blogModel,
     blogViewModel,
 
