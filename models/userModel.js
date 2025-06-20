@@ -128,7 +128,7 @@ const viewSchema=new mongoose.Schema({
         sampleCollectDate: String,  // Consider using Date type for better querying
         sampleCollectTime: String,
       
-        bookingId: Number,  // Consider making it String if using custom ID format
+        bookingId: String,  // Consider making it String if using custom ID format
         bookingDate: String, // Consider changing to Date type
       
         bookingStatus: {
