@@ -1162,7 +1162,6 @@ const bookedOrder = async (req, res) => {
       giftAmount: giftAmount || 0,
       paymentStatus: paymentStatus || false,
       paymentMode: paymentMode || "",
-      report: report || "",
       sampleCollectDate: sampleCollectDate || "",
       sampleCollectTime: sampleCollectTime || "",
       bookingId: orderID,
