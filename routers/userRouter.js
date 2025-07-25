@@ -87,6 +87,10 @@ router.get("/blogList", userController.blogList);
 router.get("/blogCategoryList", userController.blogCategoryList);
 
 router.post("/createRazorpayOrder", createRazorpayOrder);
+router.post("/getCartTests", userController.getCartTests);
+router.post("/cancelBooking", userController.cancelBooking);
+
+
 
 //exporting router
 module.exports = router;

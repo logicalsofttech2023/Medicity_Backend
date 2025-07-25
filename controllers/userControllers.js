@@ -22,9 +22,15 @@ const {
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const mongoose = require("mongoose");
 const { default: axios } = require("axios");
+
+const generateNumericMemberId = () => {
+  const number = crypto.randomInt(100000, 999999);
+  return number;
+};
 
 //make reuse function
 const generateOtp = () => {
@@ -487,7 +493,9 @@ const addViewsToPackage = async (req, res) => {
     const { userId, packageId } = req.body;
 
     if (!packageId || !userId) {
-      return res.status(400).json({ message: "userId and packageId are required" });
+      return res
+        .status(400)
+        .json({ message: "userId and packageId are required" });
     }
 
     const validation = await viewModel.findOne({ userId, packageId });
@@ -520,13 +528,11 @@ const addViewsToPackage = async (req, res) => {
       message: "Package views added successfully",
       data: packageDetails,
     });
-
   } catch (error) {
     console.error("addViewsToPackage error:", error);
     return res.status(500).json({ error: error.message });
   }
 };
-
 
 // get recently viewed packages
 const getRecentlyViewedPackages = async (req, res) => {
@@ -556,31 +562,120 @@ const getRecentlyViewedPackages = async (req, res) => {
 };
 
 // add to cart
+// const addToCart = async (req, res) => {
+//   try {
+//     const { userId, packageId } = req.body;
+//     if (!userId || !packageId) {
+//       return res.status(400).json({ message: "userId, packageId is required" });
+//     }
+//     const validation = await cartModel.findOne({
+//       userId,
+//       packageId,
+//       cartStatus: false,
+//     });
+//     if (validation) {
+//       return res
+//         .status(400)
+//         .json({ message: "This package is already in your cart" });
+//     }
+//     const newData = new cartModel({
+//       userId,
+//       packageId,
+//     });
+//     const packageDetails = await newData.save();
+//     res.status(200).json({
+//       result: true,
+//       message: "Package added to cart successfully",
+//       data: packageDetails,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const addToCart = async (req, res) => {
   try {
-    const { userId, packageId } = req.body;
-    if (!userId || !packageId) {
-      return res.status(400).json({ message: "userId, packageId is required" });
+    const { userId, packageId, testDetails = [] } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
     }
-    const validation = await cartModel.findOne({
-      userId,
-      packageId,
-      cartStatus: false,
-    });
-    if (validation) {
-      return res
-        .status(400)
-        .json({ message: "This package is already in your cart" });
+
+    // Check if the same package is already in the cart
+    if (packageId) {
+      const existingPackage = await cartModel.findOne({
+        userId,
+        packageId,
+        cartStatus: false,
+      });
+
+      if (existingPackage) {
+        return res.status(400).json({
+          message: "This package is already in your cart",
+        });
+      }
     }
-    const newData = new cartModel({
+
+    // Check if any of the testDetails already exist for this user
+    if (testDetails.length > 0) {
+      const existingCartWithTests = await cartModel.findOne({
+        userId,
+        cartStatus: false,
+        testDetails: {
+          $elemMatch: {
+            test_id: { $in: testDetails.map((t) => t.test_id) },
+          },
+        },
+      });
+
+      if (existingCartWithTests) {
+        return res.status(400).json({
+          message: "One or more tests are already in your cart",
+        });
+      }
+    }
+
+    // Create new cart entry
+    const newCartData = new cartModel({
       userId,
-      packageId,
+      packageId: packageId || null,
+      testDetails,
     });
-    const packageDetails = await newData.save();
+
+    const savedItem = await newCartData.save();
+
     res.status(200).json({
       result: true,
-      message: "Package added to cart successfully",
-      data: packageDetails,
+      message: "Item added to cart successfully",
+      data: savedItem,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getCartTests = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    const testCartItems = await cartModel.find({
+      userId,
+      cartStatus: false,
+      testDetails: { $exists: true, $not: { $size: 0 } },
+    });
+
+    if (!testCartItems.length) {
+      return res.status(404).json({ message: "No test items found in cart" });
+    }
+
+    res.status(200).json({
+      result: true,
+      message: "Test items in cart",
+      data: testCartItems,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -608,21 +703,80 @@ const getCartItems = async (req, res) => {
   }
 };
 // delete from cart
+// const deleteFromCart = async (req, res) => {
+//   try {
+//     const { userId, packageId } = req.body;
+//     if (!userId || !packageId) {
+//       return res.status(400).json({ message: "userId, packageId is required" });
+//     }
+//     await cartModel.findOneAndDelete({ userId, packageId });
+//     res.status(200).json({
+//       result: true,
+//       message: "Package deleted from cart successfully",
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const deleteFromCart = async (req, res) => {
   try {
-    const { userId, packageId } = req.body;
-    if (!userId || !packageId) {
-      return res.status(400).json({ message: "userId, packageId is required" });
+    const { userId, packageId, testId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
     }
-    await cartModel.findOneAndDelete({ userId, packageId });
-    res.status(200).json({
-      result: true,
-      message: "Package deleted from cart successfully",
+
+    // Case 1: Delete entire cart item by packageId
+    if (packageId) {
+      const deleted = await cartModel.findOneAndDelete({ userId, packageId });
+      if (!deleted) {
+        return res.status(404).json({ message: "Package not found in cart" });
+      }
+      return res.status(200).json({
+        result: true,
+        message: "Package deleted from cart successfully",
+      });
+    }
+
+    // Case 2: Delete a specific test item using testId from testDetails array
+    if (testId) {
+      const updated = await cartModel.findOneAndUpdate(
+        {
+          userId,
+          "testDetails.test_id": testId,
+        },
+        {
+          $pull: { testDetails: { test_id: testId } },
+        },
+        { new: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Test not found in cart" });
+      }
+
+      // If no more testDetails left and no packageId, delete entire document
+      if (updated.testDetails.length === 0 && !updated.packageId) {
+        await cartModel.findByIdAndDelete(updated._id);
+      }
+
+      return res.status(200).json({
+        result: true,
+        message: "Test deleted from cart successfully",
+      });
+    }
+
+    // Case 3: Neither packageId nor testId provided
+    return res.status(400).json({
+      result: false,
+      message: "Please provide either packageId or testId to delete from cart",
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 // update cart item quantity
 
 const createAddress = async (req, res) => {
@@ -851,37 +1005,65 @@ const bookedOrder = async (req, res) => {
       sampleCollectTime,
       bookingId,
       paymentId,
+      testDetail,
     } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
 
+    // Parse packageIds (can be array, stringified array, or comma-separated)
+    let parsedPackageIds = [];
+    if (Array.isArray(packageIds)) {
+      parsedPackageIds = packageIds;
+    } else if (typeof packageIds === "string") {
+      try {
+        const temp = JSON.parse(packageIds);
+        parsedPackageIds = Array.isArray(temp) ? temp : packageIds.split(",");
+      } catch {
+        parsedPackageIds = packageIds.split(",");
+      }
+    }
+
+    const objectPackageIds = parsedPackageIds
+      .map((id) => id?.trim())
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
     const objectMembers = members
-      ? members.split(",").map((id) => new mongoose.Types.ObjectId(id))
+      ? members
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id))
       : [];
 
     const objectAddress = address
-      ? address.split(",").map((id) => new mongoose.Types.ObjectId(id))
+      ? address
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id))
       : [];
 
-    const objectPackageIds = packageIds
-      ? packageIds.split(",").map((id) => new mongoose.Types.ObjectId(id))
-      : [];
+    if (!objectMembers.length) {
+      return res
+        .status(400)
+        .json({ message: "At least one valid member is required" });
+    }
 
     const memberDetails = await memberModel.findOne({ _id: objectMembers[0] });
     if (!memberDetails) {
       return res.status(404).json({ message: "Member details not found" });
     }
 
-    const packageList = await packageModel.find({
-      _id: { $in: objectPackageIds },
-    });
-    if (!packageList.length) {
-      return res.status(404).json({ message: "Package details not found" });
-    }
+    const packageList = objectPackageIds.length
+      ? await packageModel.find({ _id: { $in: objectPackageIds } })
+      : [];
 
     const testDetails = [];
+
+    // Collect test details from packages
     packageList.forEach((pkg) => {
       if (Array.isArray(pkg.test)) {
         pkg.test.forEach((testItem) => {
@@ -894,13 +1076,25 @@ const bookedOrder = async (req, res) => {
       }
     });
 
+    // If `testDetail` exists in request and is a valid array, merge it
+    if (Array.isArray(testDetail) && testDetail.length > 0) {
+      testDetail.forEach((item) => {
+        testDetails.push({
+          test_id: String(item.test_id || "NA"),
+          test_name: item.test_name || "Unknown",
+          test_rate: String(Number(item.test_rate) || 0),
+        });
+      });
+    }
+
     const orderID = bookingId || `BOOK${Date.now()}`;
+    const MemberId = generateNumericMemberId();
     const labRegistrationPayload = {
       empId: "KLR099101",
       secretKey: "KLR@74123",
       patient_demographic: {
-        member_id: memberDetails.member_id || 105,
-        patient_name: memberDetails.title || "Unknown",
+        member_id: MemberId,
+        patient_name: memberDetails.fullName || "Unknown",
         gender: memberDetails.gender,
         dob: memberDetails.dob,
         phone_number: memberDetails.phone,
@@ -927,17 +1121,18 @@ const bookedOrder = async (req, res) => {
       },
     };
 
-    console.log("Lab Registration Payload", JSON.stringify(labRegistrationPayload));
+    console.log(
+      "Lab Registration Payload:",
+      JSON.stringify(labRegistrationPayload)
+    );
 
     let apiResponse;
-
     try {
       apiResponse = await axios.post(
         "https://medicityguwahati.in/klar_diag/api/labRegistration/",
         labRegistrationPayload,
         { headers: { "Content-Type": "application/json" } }
       );
-
       console.log("Lab API Success Response:", apiResponse);
     } catch (err) {
       console.error("Lab API Error:", err.response?.data || err.message);
@@ -947,9 +1142,7 @@ const bookedOrder = async (req, res) => {
       });
     }
 
-
-
-    if (!apiResponse.data.status === "success") {
+    if (apiResponse?.data?.status !== "success") {
       return res.status(400).json({
         message: "Failed to register with lab system",
         externalResponse: apiResponse.data,
@@ -973,10 +1166,44 @@ const bookedOrder = async (req, res) => {
       sampleCollectDate: sampleCollectDate || "",
       sampleCollectTime: sampleCollectTime || "",
       bookingId: orderID,
-
+      testDetails: testDetail,
+      bill_no: apiResponse?.data?.bill_no,
+      memberId: MemberId,
     });
 
     const saved = await newBooking.save();
+
+    // 🔁 Cart Cleanup Logic
+    try {
+      const cartQuery = { userId: new mongoose.Types.ObjectId(userId) };
+
+      // Case 1: Remove package items from cart
+      if (objectPackageIds.length > 0) {
+        await cartModel.deleteMany({
+          ...cartQuery,
+          packageId: { $in: objectPackageIds },
+        });
+      }
+
+      // Case 2: Remove booked testDetails (if testDetail is used directly)
+      if (Array.isArray(testDetail) && testDetail.length > 0) {
+        for (const test of testDetail) {
+          await cartModel.updateMany(
+            { ...cartQuery, "testDetails.test_id": test.test_id },
+            { $pull: { testDetails: { test_id: test.test_id } } }
+          );
+        }
+
+        // Optionally clean up empty carts after pulling testDetails
+        await cartModel.deleteMany({
+          ...cartQuery,
+          testDetails: { $size: 0 },
+          packageId: { $exists: false },
+        });
+      }
+    } catch (cartErr) {
+      console.error("Cart cleanup error:", cartErr.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -988,6 +1215,54 @@ const bookedOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error creating booking",
+      error: err.message,
+    });
+  }
+};
+
+const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId, reason } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId is required",
+      });
+    }
+
+    const booking = await bookingOrderModel.findOne({ _id: bookingId });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Optional: Check if it's already cancelled
+    if (booking.bookingStatus === 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking is already cancelled",
+      });
+    }
+
+    // Update booking status
+    booking.bookingStatus = 2;
+    booking.cancelReason = reason;
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      data: booking,
+    });
+  } catch (err) {
+    console.error("Cancel Booking Error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
       error: err.message,
     });
   }
@@ -1522,4 +1797,6 @@ module.exports = {
   blogList,
   blogCategoryList,
   getAllPackageList,
+  getCartTests,
+  cancelBooking,
 };

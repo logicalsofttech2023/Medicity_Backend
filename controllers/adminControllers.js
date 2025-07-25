@@ -8,8 +8,8 @@ const {
   reportsModel,
   blogCategoryModel,
   blogModel,
-  blogViewModel,
   packageModel,
+  blogViewModel,
 } = require("./../models/adminModel");
 
 const {
@@ -112,7 +112,7 @@ const updatePackageCategory = async (req, res) => {
 //add package
 const addPackage = async (req, res) => {
   console.log(req.body);
-  
+
   try {
     const {
       title,
@@ -234,7 +234,7 @@ const getSinglePackage = async (req, res) => {
   }
 };
 //UPDAte package
-const updatePackage = async (req, res) => {  
+const updatePackage = async (req, res) => {
   try {
     const { packageId, offer, test } = req.body;
 
@@ -249,7 +249,9 @@ const updatePackage = async (req, res) => {
         try {
           offerArray = JSON.parse(offer);
         } catch (error) {
-          return res.status(400).json({ message: "Invalid JSON format for offer" });
+          return res
+            .status(400)
+            .json({ message: "Invalid JSON format for offer" });
         }
       } else if (Array.isArray(offer)) {
         offerArray = offer;
@@ -265,7 +267,9 @@ const updatePackage = async (req, res) => {
         try {
           testArray = JSON.parse(test);
         } catch (error) {
-          return res.status(400).json({ message: "Invalid JSON format for test" });
+          return res
+            .status(400)
+            .json({ message: "Invalid JSON format for test" });
         }
       } else if (Array.isArray(test)) {
         testArray = test;
@@ -298,14 +302,14 @@ const updatePackage = async (req, res) => {
 
     await packageModel.findByIdAndUpdate(packageId, obj, { new: true });
 
-    res.status(200).json({ result: true, message: "Data updated successfully" });
-
+    res
+      .status(200)
+      .json({ result: true, message: "Data updated successfully" });
   } catch (error) {
     console.error("Update package error:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
 
 //DELETE package
 const deletePackage = async (req, res) => {
@@ -1246,6 +1250,38 @@ const bookingOrderStatusChange = async (req, res) => {
   }
 };
 
+const dashboardCount = async (req, res) => {
+  try {
+    const totalBooking = await bookingOrderModel.countDocuments();
+    const totalUser = await userModel.countDocuments();
+    const totalAppointment = await appointmentModel.countDocuments();
+    const totalPrescription = await prescriptionModel.countDocuments();
+    const totalReport = await reportsModel.countDocuments();
+    const totalBlogs = await blogModel.countDocuments();
+    const totalBlogView = await blogViewModel.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      message: "Dashboard count",
+      data: {
+        totalBooking,
+        totalUser,
+        totalAppointment,
+        totalPrescription,
+        totalReport,
+        totalBlogs,
+        totalBlogView,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch bookings",
+      error: err.message,
+    });
+  }
+};
+
 module.exports = {
   addPackageCategory,
   addPackage,
@@ -1294,4 +1330,5 @@ module.exports = {
   bookingOrderList,
   bookingOrderDetails,
   bookingOrderStatusChange,
+  dashboardCount,
 };
